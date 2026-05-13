@@ -1,113 +1,253 @@
--- === AUTO KILL + COUNTDOWN ===
+-- === AUTO KILL + TP LOOP GUI ===
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local interval = 3600
 
-local enabled = true
-local timeLeft = interval
-local lastTime = tick()
+-- ================== SETTINGS ==================
+local killInterval = 60
+local tpInterval = 1
 
-local countdownConnection = nil
-local autoKillLoop = nil
+local tpPosition = Vector3.new(-2678, 162, 1758)   -- Default Forsaken
+local killEnabled = true
+local tpEnabled = false
+
+local timeLeftKill = killInterval
+local lastTimeKill = tick()
+local lastTimeTP = tick()
 
 -- ================== GUI ==================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoKillGUI"
+screenGui.Name = "ProToolsGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 210, 0, 65)
-frame.Position = UDim2.new(1, -220, 0, 10)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 260)
+mainFrame.Position = UDim2.new(1, -270, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainFrame.BackgroundTransparency = 0.25        
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
 
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 12)
-uiCorner.Parent = frame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 14)
+corner.Parent = mainFrame
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0)
-label.BackgroundTransparency = 1
-label.TextScaled = true
-label.Font = Enum.Font.GothamBold
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.Parent = frame
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "🔧 AutoKill & LoopTP"
+title.TextColor3 = Color3.fromRGB(0, 180, 255)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
 
--- ================== KILL FUNCTION ==================
+-- Minimize Button (dipindah ke bawah tengah)
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 80, 0, 25)
+minimizeBtn.Position = UDim2.new(0.5, -40, 1, -32)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+minimizeBtn.BackgroundTransparency = 0.3
+minimizeBtn.Text = "Minimize"
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.TextScaled = true
+minimizeBtn.Font = Enum.Font.GothamSemibold
+minimizeBtn.Parent = mainFrame
+
+local uiMinCorner = Instance.new("UICorner")
+uiMinCorner.CornerRadius = UDim.new(0, 8)
+uiMinCorner.Parent = minimizeBtn
+
+-- ================== AUTOKILL SECTION ==================
+local killTitle = Instance.new("TextLabel")
+killTitle.Size = UDim2.new(1, -20, 0, 25)
+killTitle.Position = UDim2.new(0, 10, 0, 45)
+killTitle.BackgroundTransparency = 1
+killTitle.Text = "AutoKill"
+killTitle.TextColor3 = Color3.fromRGB(0, 255, 120)
+killTitle.TextXAlignment = Enum.TextXAlignment.Left
+killTitle.Font = Enum.Font.GothamSemibold
+killTitle.Parent = mainFrame
+
+local killTimerLabel = Instance.new("TextLabel")
+killTimerLabel.Size = UDim2.new(1, -20, 0, 32)
+killTimerLabel.Position = UDim2.new(0, 10, 0, 70)
+killTimerLabel.BackgroundTransparency = 1
+killTimerLabel.Text = "1:00"
+killTimerLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+killTimerLabel.TextScaled = true
+killTimerLabel.Font = Enum.Font.GothamBold
+killTimerLabel.Parent = mainFrame
+
+local killToggle = Instance.new("TextButton")
+killToggle.Size = UDim2.new(0, 90, 0, 28)
+killToggle.Position = UDim2.new(1, -100, 0, 45)
+killToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+killToggle.Text = "ON"
+killToggle.TextColor3 = Color3.new(1,1,1)
+killToggle.TextScaled = true
+killToggle.Font = Enum.Font.GothamBold
+killToggle.Parent = mainFrame
+
+-- ================== TP LOOP SECTION ==================
+local tpTitle = Instance.new("TextLabel")
+tpTitle.Size = UDim2.new(1, -20, 0, 25)
+tpTitle.Position = UDim2.new(0, 10, 0, 115)
+tpTitle.BackgroundTransparency = 1
+tpTitle.Text = "TP Loop"
+tpTitle.TextColor3 = Color3.fromRGB(255, 170, 0)
+tpTitle.TextXAlignment = Enum.TextXAlignment.Left
+tpTitle.Font = Enum.Font.GothamSemibold
+tpTitle.Parent = mainFrame
+
+local tpToggle = Instance.new("TextButton")
+tpToggle.Size = UDim2.new(0, 90, 0, 28)
+tpToggle.Position = UDim2.new(1, -100, 0, 115)
+tpToggle.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+tpToggle.Text = "OFF"
+tpToggle.TextColor3 = Color3.new(1,1,1)
+tpToggle.TextScaled = true
+tpToggle.Font = Enum.Font.GothamBold
+tpToggle.Parent = mainFrame
+
+-- Preset Buttons
+local forsakenBtn = Instance.new("TextButton")
+forsakenBtn.Size = UDim2.new(0.47, 0, 0, 38)
+forsakenBtn.Position = UDim2.new(0, 10, 0, 155)
+forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+forsakenBtn.Text = "Forsaken"
+forsakenBtn.TextColor3 = Color3.new(1,1,1)
+forsakenBtn.TextScaled = true
+forsakenBtn.Font = Enum.Font.GothamSemibold
+forsakenBtn.Parent = mainFrame
+
+local mineshaftBtn = Instance.new("TextButton")
+mineshaftBtn.Size = UDim2.new(0.47, 0, 0, 38)
+mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 155)
+mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mineshaftBtn.Text = "Mineshaft"
+mineshaftBtn.TextColor3 = Color3.new(1,1,1)
+mineshaftBtn.TextScaled = true
+mineshaftBtn.Font = Enum.Font.GothamSemibold
+mineshaftBtn.Parent = mainFrame
+
+-- Highlight function
+local function updateHighlight()
+	if tpPosition.Y == 162 then -- Forsaken
+		forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	else -- Mineshaft
+		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	end
+end
+
+-- ================== FUNCTIONS ==================
+local function getRoot(char)
+	return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+end
+
 local function forceKill(char)
 	if not char then return end
 	local hum = char:FindFirstChildWhichIsA("Humanoid")
-	if hum then
-		hum.Health = 0
+	if hum then hum.Health = 0 else char:BreakJoints() end
+end
+
+local function teleport()
+	local char = player.Character
+	local root = char and getRoot(char)
+	if root then
+		root.CFrame = CFrame.new(tpPosition)
+	end
+end
+
+-- ================== COUNTDOWN & LOOPS ==================
+RunService.Heartbeat:Connect(function()
+	-- AutoKill
+	if killEnabled then
+		local delta = tick() - lastTimeKill
+		lastTimeKill = tick()
+		timeLeftKill -= delta
+
+		if timeLeftKill <= 0 then
+			if player.Character then forceKill(player.Character) end
+			timeLeftKill = killInterval
+		end
+
+		local min = math.floor(timeLeftKill / 60)
+		local sec = math.floor(timeLeftKill % 60)
+		killTimerLabel.Text = string.format("%d:%02d", min, sec)
+	end
+
+	-- TP Loop
+	if tpEnabled then
+		if tick() - lastTimeTP >= tpInterval then
+			teleport()
+			lastTimeTP = tick()
+		end
+	end
+end)
+
+-- ================== BUTTONS ==================
+killToggle.MouseButton1Click:Connect(function()
+	killEnabled = not killEnabled
+	killToggle.Text = killEnabled and "ON" or "OFF"
+	killToggle.BackgroundColor3 = killEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(80,80,80)
+end)
+
+tpToggle.MouseButton1Click:Connect(function()
+	tpEnabled = not tpEnabled
+	tpToggle.Text = tpEnabled and "ON" or "OFF"
+	tpToggle.BackgroundColor3 = tpEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
+	if tpEnabled then lastTimeTP = tick() end
+end)
+
+forsakenBtn.MouseButton1Click:Connect(function()
+	tpPosition = Vector3.new(-2678, 162, 1758)
+	updateHighlight()
+	print("✅ TP Position → Forsaken")
+end)
+
+mineshaftBtn.MouseButton1Click:Connect(function()
+	tpPosition = Vector3.new(-728, -869, -102)
+	updateHighlight()
+	print("✅ TP Position → Mineshaft")
+end)
+
+-- Minimize
+local minimized = false
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		mainFrame.Size = UDim2.new(0, 250, 0, 55)
+		minimizeBtn.Text = "Expand"
 	else
-		char:BreakJoints()
+		mainFrame.Size = UDim2.new(0, 250, 0, 260)
+		minimizeBtn.Text = "Minimize"
 	end
-end
+end)
 
--- ================== UPDATE LABEL ==================
-local function updateLabel()
-	if not enabled then
-		label.Text = "AutoKill: OFF"
-		label.TextColor3 = Color3.fromRGB(255, 60, 60)
-		return
+-- Drag GUI
+local dragging = false
+local dragStart, startPos
+
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
 	end
-	
-	local min = math.floor(timeLeft / 60)
-	local sec = timeLeft % 60
-	label.Text = string.format("AutoKill: ON\n%d:%02d", min, sec)
-	label.TextColor3 = Color3.fromRGB(0, 255, 100)
-end
+end)
 
--- ================== COUNTDOWN (FIXED) ==================
-local function startCountdown()
-	if countdownConnection then return end
-	
-	countdownConnection = RunService.Heartbeat:Connect(function()
-		if enabled then
-			local now = tick()
-			local delta = now - lastTime
-			lastTime = now
-			
-			timeLeft = timeLeft - delta
-			
-			if timeLeft <= 0 then
-				if player.Character then
-					forceKill(player.Character)
-				end
-				timeLeft = interval
-			end
-			
-			updateLabel()
-		end
-	end)
-end
-
--- ================== TOGGLE ==================
-frame.InputBegan:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		enabled = not enabled
-		lastTime = tick()
-		
-		if enabled then
-			timeLeft = interval
-			startCountdown()
-		else
-			if countdownConnection then
-				countdownConnection:Disconnect()
-				countdownConnection = nil
-			end
-		end
-		
-		updateLabel()
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
 
 -- ================== START ==================
-updateLabel()
-startCountdown()
-
-print("✅ AutoKill.")
+updateHighlight()
+print("✅Loaded!")
