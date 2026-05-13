@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- ================== SETTINGS ==================
-local killInterval = 60
+local killInterval = 3600
 local tpInterval = 1
 
 local tpPosition = Vector3.new(-2678, 162, 1758)   -- Forsaken
