@@ -8,9 +8,9 @@ local player = Players.LocalPlayer
 local killInterval = 60
 local tpInterval = 1
 
-local tpPosition = Vector3.new(-2678, 162, 1758)   -- Default Forsaken
+local tpPosition = Vector3.new(-2678, 162, 1758)   -- Forsaken
 local killEnabled = true
-local tpEnabled = false
+local tpEnabled = true        
 
 local timeLeftKill = killInterval
 local lastTimeKill = tick()
@@ -26,7 +26,7 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 250, 0, 260)
 mainFrame.Position = UDim2.new(1, -270, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-mainFrame.BackgroundTransparency = 0.25        
+mainFrame.BackgroundTransparency = 0.25
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
@@ -38,111 +38,107 @@ corner.Parent = mainFrame
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "🔧 AutoKill & LoopTP"
+title.Text = "🔧 AutoKILL & AutoTP"
 title.TextColor3 = Color3.fromRGB(0, 180, 255)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = mainFrame
 
--- Minimize Button (dipindah ke bawah tengah)
+-- Content Frame
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -40)
+contentFrame.Position = UDim2.new(0, 0, 0, 35)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Minimize Button 
 local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 80, 0, 25)
-minimizeBtn.Position = UDim2.new(0.5, -40, 1, -32)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-minimizeBtn.BackgroundTransparency = 0.3
+minimizeBtn.Size = UDim2.new(0, 90, 0, 28)
+minimizeBtn.Position = UDim2.new(0.5, -45, 1, -35)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+minimizeBtn.BackgroundTransparency = 0.2
 minimizeBtn.Text = "Minimize"
 minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 minimizeBtn.TextScaled = true
 minimizeBtn.Font = Enum.Font.GothamSemibold
 minimizeBtn.Parent = mainFrame
 
-local uiMinCorner = Instance.new("UICorner")
-uiMinCorner.CornerRadius = UDim.new(0, 8)
-uiMinCorner.Parent = minimizeBtn
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 8)
+minCorner.Parent = minimizeBtn
 
 -- ================== AUTOKILL SECTION ==================
 local killTitle = Instance.new("TextLabel")
 killTitle.Size = UDim2.new(1, -20, 0, 25)
-killTitle.Position = UDim2.new(0, 10, 0, 45)
+killTitle.Position = UDim2.new(0, 10, 0, 10)
 killTitle.BackgroundTransparency = 1
 killTitle.Text = "AutoKill"
 killTitle.TextColor3 = Color3.fromRGB(0, 255, 120)
 killTitle.TextXAlignment = Enum.TextXAlignment.Left
 killTitle.Font = Enum.Font.GothamSemibold
-killTitle.Parent = mainFrame
+killTitle.Parent = contentFrame
 
 local killTimerLabel = Instance.new("TextLabel")
 killTimerLabel.Size = UDim2.new(1, -20, 0, 32)
-killTimerLabel.Position = UDim2.new(0, 10, 0, 70)
+killTimerLabel.Position = UDim2.new(0, 10, 0, 35)
 killTimerLabel.BackgroundTransparency = 1
 killTimerLabel.Text = "1:00"
 killTimerLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
 killTimerLabel.TextScaled = true
 killTimerLabel.Font = Enum.Font.GothamBold
-killTimerLabel.Parent = mainFrame
+killTimerLabel.Parent = contentFrame
 
 local killToggle = Instance.new("TextButton")
 killToggle.Size = UDim2.new(0, 90, 0, 28)
-killToggle.Position = UDim2.new(1, -100, 0, 45)
+killToggle.Position = UDim2.new(1, -100, 0, 10)
 killToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
 killToggle.Text = "ON"
 killToggle.TextColor3 = Color3.new(1,1,1)
 killToggle.TextScaled = true
 killToggle.Font = Enum.Font.GothamBold
-killToggle.Parent = mainFrame
+killToggle.Parent = contentFrame
 
 -- ================== TP LOOP SECTION ==================
 local tpTitle = Instance.new("TextLabel")
 tpTitle.Size = UDim2.new(1, -20, 0, 25)
-tpTitle.Position = UDim2.new(0, 10, 0, 115)
+tpTitle.Position = UDim2.new(0, 10, 0, 80)
 tpTitle.BackgroundTransparency = 1
 tpTitle.Text = "TP Loop"
 tpTitle.TextColor3 = Color3.fromRGB(255, 170, 0)
 tpTitle.TextXAlignment = Enum.TextXAlignment.Left
 tpTitle.Font = Enum.Font.GothamSemibold
-tpTitle.Parent = mainFrame
+tpTitle.Parent = contentFrame
 
 local tpToggle = Instance.new("TextButton")
 tpToggle.Size = UDim2.new(0, 90, 0, 28)
-tpToggle.Position = UDim2.new(1, -100, 0, 115)
-tpToggle.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-tpToggle.Text = "OFF"
+tpToggle.Position = UDim2.new(1, -100, 0, 80)
+tpToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+tpToggle.Text = "ON"
 tpToggle.TextColor3 = Color3.new(1,1,1)
 tpToggle.TextScaled = true
 tpToggle.Font = Enum.Font.GothamBold
-tpToggle.Parent = mainFrame
+tpToggle.Parent = contentFrame
 
 -- Preset Buttons
 local forsakenBtn = Instance.new("TextButton")
 forsakenBtn.Size = UDim2.new(0.47, 0, 0, 38)
-forsakenBtn.Position = UDim2.new(0, 10, 0, 155)
-forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+forsakenBtn.Position = UDim2.new(0, 10, 0, 125)
+forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 forsakenBtn.Text = "Forsaken"
 forsakenBtn.TextColor3 = Color3.new(1,1,1)
 forsakenBtn.TextScaled = true
 forsakenBtn.Font = Enum.Font.GothamSemibold
-forsakenBtn.Parent = mainFrame
+forsakenBtn.Parent = contentFrame
 
 local mineshaftBtn = Instance.new("TextButton")
 mineshaftBtn.Size = UDim2.new(0.47, 0, 0, 38)
-mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 155)
+mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 125)
 mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mineshaftBtn.Text = "Mineshaft"
 mineshaftBtn.TextColor3 = Color3.new(1,1,1)
 mineshaftBtn.TextScaled = true
 mineshaftBtn.Font = Enum.Font.GothamSemibold
-mineshaftBtn.Parent = mainFrame
-
--- Highlight function
-local function updateHighlight()
-	if tpPosition.Y == 162 then -- Forsaken
-		forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	else -- Mineshaft
-		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-		forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	end
-end
+mineshaftBtn.Parent = contentFrame
 
 -- ================== FUNCTIONS ==================
 local function getRoot(char)
@@ -163,7 +159,17 @@ local function teleport()
 	end
 end
 
--- ================== COUNTDOWN & LOOPS ==================
+local function updateHighlight()
+	if tpPosition.Y == 162 then
+		forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	else
+		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+		forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	end
+end
+
+-- ================== LOOPS ==================
 RunService.Heartbeat:Connect(function()
 	-- AutoKill
 	if killEnabled then
@@ -207,23 +213,23 @@ end)
 forsakenBtn.MouseButton1Click:Connect(function()
 	tpPosition = Vector3.new(-2678, 162, 1758)
 	updateHighlight()
-	print("✅ TP Position → Forsaken")
 end)
 
 mineshaftBtn.MouseButton1Click:Connect(function()
 	tpPosition = Vector3.new(-728, -869, -102)
 	updateHighlight()
-	print("✅ TP Position → Mineshaft")
 end)
 
--- Minimize
+-- Minimize System (Fixed)
 local minimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	if minimized then
-		mainFrame.Size = UDim2.new(0, 250, 0, 55)
+		contentFrame.Visible = false
+		mainFrame.Size = UDim2.new(0, 250, 0, 75)
 		minimizeBtn.Text = "Expand"
 	else
+		contentFrame.Visible = true
 		mainFrame.Size = UDim2.new(0, 250, 0, 260)
 		minimizeBtn.Text = "Minimize"
 	end
@@ -250,4 +256,4 @@ end)
 
 -- ================== START ==================
 updateHighlight()
-print("✅Loaded!")
+print("✅Version Loaded!")
