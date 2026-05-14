@@ -20,7 +20,7 @@ local lastTimeTP = tick()
 
 -- ================== GUI ==================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ProToolsGUI"
+screenGui.Name = "Some Tools Idk"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
