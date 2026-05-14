@@ -1,16 +1,18 @@
--- === AUTO KILL + TP LOOP GUI ===
+-- === PRO TOOLS GUI - FINAL (with AntiLag 10s Delay) ===
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 
 -- ================== SETTINGS ==================
-local killInterval = 3600
+local killInterval = 60
 local tpInterval = 1
 
-local tpPosition = Vector3.new(-2678, 162, 1758)   -- Forsaken
+local tpPosition = Vector3.new(-2678, 162, 1758)
 local killEnabled = true
-local tpEnabled = true        
+local tpEnabled = true
+local antilagEnabled = true   -- Auto nyala
 
 local timeLeftKill = killInterval
 local lastTimeKill = tick()
@@ -23,7 +25,7 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 260)
+mainFrame.Size = UDim2.new(0, 250, 0, 310)
 mainFrame.Position = UDim2.new(1, -270, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BackgroundTransparency = 0.25
@@ -34,24 +36,21 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 14)
 corner.Parent = mainFrame
 
--- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "🔧 AutoKILL & AutoTP"
+title.Text = "🔧 Pro Tools"
 title.TextColor3 = Color3.fromRGB(0, 180, 255)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = mainFrame
 
--- Content Frame
 local contentFrame = Instance.new("Frame")
 contentFrame.Size = UDim2.new(1, 0, 1, -40)
 contentFrame.Position = UDim2.new(0, 0, 0, 35)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Minimize Button 
 local minimizeBtn = Instance.new("TextButton")
 minimizeBtn.Size = UDim2.new(0, 90, 0, 28)
 minimizeBtn.Position = UDim2.new(0.5, -45, 1, -35)
@@ -67,7 +66,7 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 8)
 minCorner.Parent = minimizeBtn
 
--- ================== AUTOKILL SECTION ==================
+-- ================== AUTOKILL ==================
 local killTitle = Instance.new("TextLabel")
 killTitle.Size = UDim2.new(1, -20, 0, 25)
 killTitle.Position = UDim2.new(0, 10, 0, 10)
@@ -98,7 +97,7 @@ killToggle.TextScaled = true
 killToggle.Font = Enum.Font.GothamBold
 killToggle.Parent = contentFrame
 
--- ================== TP LOOP SECTION ==================
+-- ================== TP LOOP ==================
 local tpTitle = Instance.new("TextLabel")
 tpTitle.Size = UDim2.new(1, -20, 0, 25)
 tpTitle.Position = UDim2.new(0, 10, 0, 80)
@@ -119,10 +118,31 @@ tpToggle.TextScaled = true
 tpToggle.Font = Enum.Font.GothamBold
 tpToggle.Parent = contentFrame
 
--- Preset Buttons
+-- ================== ANTILAG SECTION ==================
+local lagTitle = Instance.new("TextLabel")
+lagTitle.Size = UDim2.new(1, -20, 0, 25)
+lagTitle.Position = UDim2.new(0, 10, 0, 125)
+lagTitle.BackgroundTransparency = 1
+lagTitle.Text = "AntiLag"
+lagTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
+lagTitle.TextXAlignment = Enum.TextXAlignment.Left
+lagTitle.Font = Enum.Font.GothamSemibold
+lagTitle.Parent = contentFrame
+
+local lagToggle = Instance.new("TextButton")
+lagToggle.Size = UDim2.new(0, 90, 0, 28)
+lagToggle.Position = UDim2.new(1, -100, 0, 125)
+lagToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+lagToggle.Text = "ON"
+lagToggle.TextColor3 = Color3.new(1,1,1)
+lagToggle.TextScaled = true
+lagToggle.Font = Enum.Font.GothamBold
+lagToggle.Parent = contentFrame
+
+-- Preset TP Buttons
 local forsakenBtn = Instance.new("TextButton")
 forsakenBtn.Size = UDim2.new(0.47, 0, 0, 38)
-forsakenBtn.Position = UDim2.new(0, 10, 0, 125)
+forsakenBtn.Position = UDim2.new(0, 10, 0, 170)
 forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 forsakenBtn.Text = "Forsaken"
 forsakenBtn.TextColor3 = Color3.new(1,1,1)
@@ -132,7 +152,7 @@ forsakenBtn.Parent = contentFrame
 
 local mineshaftBtn = Instance.new("TextButton")
 mineshaftBtn.Size = UDim2.new(0.47, 0, 0, 38)
-mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 125)
+mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 170)
 mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mineshaftBtn.Text = "Mineshaft"
 mineshaftBtn.TextColor3 = Color3.new(1,1,1)
@@ -154,9 +174,61 @@ end
 local function teleport()
 	local char = player.Character
 	local root = char and getRoot(char)
-	if root then
-		root.CFrame = CFrame.new(tpPosition)
+	if root then root.CFrame = CFrame.new(tpPosition) end
+end
+
+local function applyAntiLag()
+	local Terrain = workspace:FindFirstChildWhichIsA("Terrain")
+	if Terrain then
+		Terrain.WaterWaveSize = 0
+		Terrain.WaterWaveSpeed = 0
+		Terrain.WaterReflectance = 0
+		Terrain.WaterTransparency = 1
 	end
+	
+	Lighting.GlobalShadows = false
+	Lighting.FogEnd = 9e9
+	Lighting.FogStart = 9e9
+	settings().Rendering.QualityLevel = 1
+	
+	for _, v in pairs(game:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CastShadow = false
+			v.Material = "Plastic"
+			v.Reflectance = 0
+			v.BackSurface = "SmoothNoOutlines"
+			v.BottomSurface = "SmoothNoOutlines"
+			v.FrontSurface = "SmoothNoOutlines"
+			v.LeftSurface = "SmoothNoOutlines"
+			v.RightSurface = "SmoothNoOutlines"
+			v.TopSurface = "SmoothNoOutlines"
+		elseif v:IsA("Decal") then
+			v.Transparency = 1
+			v.Texture = ""
+		elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+			v.Lifetime = NumberRange.new(0)
+		end
+	end
+	
+	for _, v in pairs(Lighting:GetDescendants()) do
+		if v:IsA("PostEffect") then
+			v.Enabled = false
+		end
+	end
+	
+	-- AntiLag Descendant
+	workspace.DescendantAdded:Connect(function(child)
+		task.spawn(function()
+			if child:IsA("ForceField") or child:IsA("Sparkles") or child:IsA("Smoke") or child:IsA("Fire") or child:IsA("Beam") then
+				RunService.Heartbeat:Wait()
+				child:Destroy()
+			elseif child:IsA("BasePart") then
+				child.CastShadow = false
+			end
+		end)
+	end)
+	
+	print("✅ AntiLag telah diaktifkan!")
 end
 
 local function updateHighlight()
@@ -171,7 +243,6 @@ end
 
 -- ================== LOOPS ==================
 RunService.Heartbeat:Connect(function()
-	-- AutoKill
 	if killEnabled then
 		local delta = tick() - lastTimeKill
 		lastTimeKill = tick()
@@ -187,7 +258,6 @@ RunService.Heartbeat:Connect(function()
 		killTimerLabel.Text = string.format("%d:%02d", min, sec)
 	end
 
-	-- TP Loop
 	if tpEnabled then
 		if tick() - lastTimeTP >= tpInterval then
 			teleport()
@@ -210,6 +280,12 @@ tpToggle.MouseButton1Click:Connect(function()
 	if tpEnabled then lastTimeTP = tick() end
 end)
 
+lagToggle.MouseButton1Click:Connect(function()
+	antilagEnabled = not antilagEnabled
+	lagToggle.Text = antilagEnabled and "ON" or "OFF"
+	lagToggle.BackgroundColor3 = antilagEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
+end)
+
 forsakenBtn.MouseButton1Click:Connect(function()
 	tpPosition = Vector3.new(-2678, 162, 1758)
 	updateHighlight()
@@ -220,7 +296,7 @@ mineshaftBtn.MouseButton1Click:Connect(function()
 	updateHighlight()
 end)
 
--- Minimize System (Fixed)
+-- Minimize
 local minimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -230,30 +306,19 @@ minimizeBtn.MouseButton1Click:Connect(function()
 		minimizeBtn.Text = "Expand"
 	else
 		contentFrame.Visible = true
-		mainFrame.Size = UDim2.new(0, 250, 0, 260)
+		mainFrame.Size = UDim2.new(0, 250, 0, 310)
 		minimizeBtn.Text = "Minimize"
-	end
-end)
-
--- Drag GUI
-local dragging = false
-local dragStart, startPos
-
-mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = mainFrame.Position
-	end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
 
 -- ================== START ==================
 updateHighlight()
-print("✅Version Loaded!")
+
+-- AntiLag dengan delay 10 detik
+task.delay(10, function()
+	if antilagEnabled then
+		applyAntiLag()
+	end
+end)
+
+print("✅ Pro Tools GUI + AntiLag (10s delay) Loaded!")
