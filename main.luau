@@ -318,6 +318,7 @@ updateHighlight()
 task.delay(10, function()
 	if antilagEnabled then
 		applyAntiLag()
+		workspace:FindFirstChildOfClass('Terrain'):Clear()
 	end
 end)
 
