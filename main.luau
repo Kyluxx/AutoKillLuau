@@ -1,18 +1,21 @@
--- === PRO TOOLS GUI - FINAL (with AntiLag 10s Delay) ===
+-- === PRO TOOLS GUI - FINAL (AntiLag + Auto Rejoin) ===
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
+local GuiService = game:GetService("GuiService")
 
 local player = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local JobId = game.JobId
 
 -- ================== SETTINGS ==================
-local killInterval = 3600
+local killInterval = 60
 local tpInterval = 1
 
 local tpPosition = Vector3.new(-2678, 162, 1758)
 local killEnabled = true
 local tpEnabled = true
-local antilagEnabled = true   -- Auto nyala
 
 local timeLeftKill = killInterval
 local lastTimeKill = tick()
@@ -20,12 +23,12 @@ local lastTimeTP = tick()
 
 -- ================== GUI ==================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "Some Tools Idk"
+screenGui.Name = "ProToolsGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 310)
+mainFrame.Size = UDim2.new(0, 250, 0, 280)
 mainFrame.Position = UDim2.new(1, -270, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BackgroundTransparency = 0.25
@@ -39,7 +42,7 @@ corner.Parent = mainFrame
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
-title.Text = "🔧 Kyluxx Tools Idk"
+title.Text = "🔧 Pro Tools"
 title.TextColor3 = Color3.fromRGB(0, 180, 255)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
@@ -118,31 +121,10 @@ tpToggle.TextScaled = true
 tpToggle.Font = Enum.Font.GothamBold
 tpToggle.Parent = contentFrame
 
--- ================== ANTILAG SECTION ==================
-local lagTitle = Instance.new("TextLabel")
-lagTitle.Size = UDim2.new(1, -20, 0, 25)
-lagTitle.Position = UDim2.new(0, 10, 0, 125)
-lagTitle.BackgroundTransparency = 1
-lagTitle.Text = "AntiLag"
-lagTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
-lagTitle.TextXAlignment = Enum.TextXAlignment.Left
-lagTitle.Font = Enum.Font.GothamSemibold
-lagTitle.Parent = contentFrame
-
-local lagToggle = Instance.new("TextButton")
-lagToggle.Size = UDim2.new(0, 90, 0, 28)
-lagToggle.Position = UDim2.new(1, -100, 0, 125)
-lagToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-lagToggle.Text = "ON"
-lagToggle.TextColor3 = Color3.new(1,1,1)
-lagToggle.TextScaled = true
-lagToggle.Font = Enum.Font.GothamBold
-lagToggle.Parent = contentFrame
-
 -- Preset TP Buttons
 local forsakenBtn = Instance.new("TextButton")
 forsakenBtn.Size = UDim2.new(0.47, 0, 0, 38)
-forsakenBtn.Position = UDim2.new(0, 10, 0, 170)
+forsakenBtn.Position = UDim2.new(0, 10, 0, 125)
 forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 forsakenBtn.Text = "Forsaken"
 forsakenBtn.TextColor3 = Color3.new(1,1,1)
@@ -152,7 +134,7 @@ forsakenBtn.Parent = contentFrame
 
 local mineshaftBtn = Instance.new("TextButton")
 mineshaftBtn.Size = UDim2.new(0.47, 0, 0, 38)
-mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 170)
+mineshaftBtn.Position = UDim2.new(0.5, 5, 0, 125)
 mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mineshaftBtn.Text = "Mineshaft"
 mineshaftBtn.TextColor3 = Color3.new(1,1,1)
@@ -184,6 +166,7 @@ local function applyAntiLag()
 		Terrain.WaterWaveSpeed = 0
 		Terrain.WaterReflectance = 0
 		Terrain.WaterTransparency = 1
+		Terrain:Clear()  -- sesuai requestmu
 	end
 	
 	Lighting.GlobalShadows = false
@@ -211,12 +194,9 @@ local function applyAntiLag()
 	end
 	
 	for _, v in pairs(Lighting:GetDescendants()) do
-		if v:IsA("PostEffect") then
-			v.Enabled = false
-		end
+		if v:IsA("PostEffect") then v.Enabled = false end
 	end
 	
-	-- AntiLag Descendant
 	workspace.DescendantAdded:Connect(function(child)
 		task.spawn(function()
 			if child:IsA("ForceField") or child:IsA("Sparkles") or child:IsA("Smoke") or child:IsA("Fire") or child:IsA("Beam") then
@@ -240,6 +220,23 @@ local function updateHighlight()
 		forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	end
 end
+
+-- ================== AUTO REJOIN ==================
+GuiService.ErrorMessageChanged:Connect(function()
+	if GuiService:GetErrorMessage() ~= "" then
+		print("⚠️ Error terdeteksi, Auto Rejoin dijalankan...")
+		task.wait(1)
+		if #Players:GetPlayers() <= 1 then
+			player:Kick("\nRejoining...")
+			task.wait()
+			TeleportService:Teleport(PlaceId, player)
+		else
+			TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+		end
+	end
+end)
+
+print("✅ Auto Rejoin telah diaktifkan!")
 
 -- ================== LOOPS ==================
 RunService.Heartbeat:Connect(function()
@@ -280,12 +277,6 @@ tpToggle.MouseButton1Click:Connect(function()
 	if tpEnabled then lastTimeTP = tick() end
 end)
 
-lagToggle.MouseButton1Click:Connect(function()
-	antilagEnabled = not antilagEnabled
-	lagToggle.Text = antilagEnabled and "ON" or "OFF"
-	lagToggle.BackgroundColor3 = antilagEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
-end)
-
 forsakenBtn.MouseButton1Click:Connect(function()
 	tpPosition = Vector3.new(-2678, 162, 1758)
 	updateHighlight()
@@ -306,8 +297,26 @@ minimizeBtn.MouseButton1Click:Connect(function()
 		minimizeBtn.Text = "Expand"
 	else
 		contentFrame.Visible = true
-		mainFrame.Size = UDim2.new(0, 250, 0, 310)
+		mainFrame.Size = UDim2.new(0, 250, 0, 280)
 		minimizeBtn.Text = "Minimize"
+	end
+end)
+
+-- Drag
+local dragging = false
+local dragStart, startPos
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
 
@@ -316,10 +325,7 @@ updateHighlight()
 
 -- AntiLag dengan delay 10 detik
 task.delay(10, function()
-	if antilagEnabled then
-		applyAntiLag()
-		workspace:FindFirstChildOfClass('Terrain'):Clear()
-	end
+	applyAntiLag()
 end)
 
-print("✅ Pro Tools GUI + AntiLag (10s delay) Loaded!")
+print("✅ Pro Tools GUI + AntiLag + Auto Rejoin LOADED!")
