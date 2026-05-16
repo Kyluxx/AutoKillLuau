@@ -1,15 +1,18 @@
--- === PRO TOOLS GUI - FINAL (AntiLag + Auto Rejoin) ===
+-- === PRO TOOLS GUI - FINAL (AntiLag + Auto Rejoin + Divine Timer Sender) ===
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local TeleportService = game:GetService("TeleportService")
 local GuiService = game:GetService("GuiService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local PlaceId = game.PlaceId
 local JobId = game.JobId
 
 -- ================== SETTINGS ==================
+
 local killInterval = 3600
 local tpInterval = 1
 
@@ -21,7 +24,16 @@ local timeLeftKill = killInterval
 local lastTimeKill = tick()
 local lastTimeTP = tick()
 
+-- ================== DIVINE TIMER SETTINGS ==================
+
+getgenv().BackendUrl = "https://kyluxxserver.cloud/watchdog-roblox/roblox-log.php"
+getgenv().ItemPrefix = "DivineRadiantCrystal"
+
+local DIVINE_SEND_INTERVAL = 30
+local lastDivineSend = 0
+
 -- ================== GUI ==================
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ProToolsGUI"
 screenGui.ResetOnSpawn = false
@@ -70,6 +82,7 @@ minCorner.CornerRadius = UDim.new(0, 8)
 minCorner.Parent = minimizeBtn
 
 -- ================== AUTOKILL ==================
+
 local killTitle = Instance.new("TextLabel")
 killTitle.Size = UDim2.new(1, -20, 0, 25)
 killTitle.Position = UDim2.new(0, 10, 0, 10)
@@ -101,6 +114,7 @@ killToggle.Font = Enum.Font.GothamBold
 killToggle.Parent = contentFrame
 
 -- ================== TP LOOP ==================
+
 local tpTitle = Instance.new("TextLabel")
 tpTitle.Size = UDim2.new(1, -20, 0, 25)
 tpTitle.Position = UDim2.new(0, 10, 0, 80)
@@ -121,7 +135,8 @@ tpToggle.TextScaled = true
 tpToggle.Font = Enum.Font.GothamBold
 tpToggle.Parent = contentFrame
 
--- Preset TP Buttons
+-- ================== PRESET BUTTONS ==================
+
 local forsakenBtn = Instance.new("TextButton")
 forsakenBtn.Size = UDim2.new(0.47, 0, 0, 38)
 forsakenBtn.Position = UDim2.new(0, 10, 0, 125)
@@ -143,170 +158,315 @@ mineshaftBtn.Font = Enum.Font.GothamSemibold
 mineshaftBtn.Parent = contentFrame
 
 -- ================== FUNCTIONS ==================
+
 local function getRoot(char)
-	return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+	return char:FindFirstChild("HumanoidRootPart")
+		or char:FindFirstChild("UpperTorso")
+		or char:FindFirstChild("Torso")
 end
 
 local function forceKill(char)
 	if not char then return end
+
 	local hum = char:FindFirstChildWhichIsA("Humanoid")
-	if hum then hum.Health = 0 else char:BreakJoints() end
+
+	if hum then
+		hum.Health = 0
+	else
+		char:BreakJoints()
+	end
 end
 
 local function teleport()
 	local char = player.Character
 	local root = char and getRoot(char)
-	if root then root.CFrame = CFrame.new(tpPosition) end
+
+	if root then
+		root.CFrame = CFrame.new(tpPosition)
+	end
 end
 
+-- ================== DIVINE TIMER ==================
+
+local function findCrystalTimer()
+
+	local hud = player:WaitForChild("PlayerGui"):WaitForChild("hud")
+	local safezone = hud:WaitForChild("safezone")
+	local statuses = safezone:WaitForChild("statuses")
+
+	for _, child in ipairs(statuses:GetChildren()) do
+
+		if child.Name:find(getgenv().ItemPrefix) then
+
+			local timer = child:FindFirstChild("timer")
+
+			if timer and timer:IsA("TextLabel") then
+				return timer.ContentText
+			end
+		end
+	end
+
+	return nil
+end
+
+local function sendDivineTimer()
+
+	local timerText = findCrystalTimer()
+
+	if not timerText then
+		return
+	end
+
+	local request = http_request or request or (http and http.request)
+
+	if not request then
+		warn("❌ Executor has no HTTP request support")
+		return
+	end
+
+	local body = {
+		unique_id = player.Name,
+		timer_text = timerText
+	}
+
+	local success, err = pcall(function()
+
+		request({
+			Url = getgenv().BackendUrl,
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json"
+			},
+			Body = HttpService:JSONEncode(body)
+		})
+
+	end)
+
+	if success then
+		print("✅ Divine timer sent:", timerText)
+	else
+		warn("❌ Failed sending divine timer:", err)
+	end
+end
+
+-- ================== ANTILAG ==================
+
 local function applyAntiLag()
+
 	local Terrain = workspace:FindFirstChildWhichIsA("Terrain")
+
 	if Terrain then
 		Terrain.WaterWaveSize = 0
 		Terrain.WaterWaveSpeed = 0
 		Terrain.WaterReflectance = 0
 		Terrain.WaterTransparency = 1
-		Terrain:Clear()  -- sesuai requestmu
+		Terrain:Clear()
 	end
-	
+
 	Lighting.GlobalShadows = false
 	Lighting.FogEnd = 9e9
 	Lighting.FogStart = 9e9
+
 	settings().Rendering.QualityLevel = 1
-	
+
 	for _, v in pairs(game:GetDescendants()) do
+
 		if v:IsA("BasePart") then
+
 			v.CastShadow = false
 			v.Material = "Plastic"
 			v.Reflectance = 0
-			v.BackSurface = "SmoothNoOutlines"
-			v.BottomSurface = "SmoothNoOutlines"
-			v.FrontSurface = "SmoothNoOutlines"
-			v.LeftSurface = "SmoothNoOutlines"
-			v.RightSurface = "SmoothNoOutlines"
-			v.TopSurface = "SmoothNoOutlines"
+
 		elseif v:IsA("Decal") then
+
 			v.Transparency = 1
 			v.Texture = ""
+
 		elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+
 			v.Lifetime = NumberRange.new(0)
 		end
 	end
-	
+
 	for _, v in pairs(Lighting:GetDescendants()) do
-		if v:IsA("PostEffect") then v.Enabled = false end
+		if v:IsA("PostEffect") then
+			v.Enabled = false
+		end
 	end
-	
-	workspace.DescendantAdded:Connect(function(child)
-		task.spawn(function()
-			if child:IsA("ForceField") or child:IsA("Sparkles") or child:IsA("Smoke") or child:IsA("Fire") or child:IsA("Beam") then
-				RunService.Heartbeat:Wait()
-				child:Destroy()
-			elseif child:IsA("BasePart") then
-				child.CastShadow = false
-			end
-		end)
-	end)
-	
-	print("✅ AntiLag telah diaktifkan!")
+
+	print("✅ AntiLag enabled!")
 end
 
 local function updateHighlight()
+
 	if tpPosition.Y == 162 then
+
 		forsakenBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
 	else
+
 		mineshaftBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 		forsakenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	end
 end
 
 -- ================== AUTO REJOIN ==================
+
 GuiService.ErrorMessageChanged:Connect(function()
+
 	if GuiService:GetErrorMessage() ~= "" then
-		print("⚠️ Error terdeteksi, Auto Rejoin dijalankan...")
+
+		print("⚠️ Error detected, auto rejoining...")
+
 		task.wait(1)
+
 		if #Players:GetPlayers() <= 1 then
+
 			player:Kick("\nRejoining...")
 			task.wait()
+
 			TeleportService:Teleport(PlaceId, player)
+
 		else
-			TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+
+			TeleportService:TeleportToPlaceInstance(
+				PlaceId,
+				JobId,
+				player
+			)
 		end
 	end
 end)
 
-print("✅ Auto Rejoin telah diaktifkan!")
+print("✅ Auto Rejoin enabled!")
 
--- ================== LOOPS ==================
+-- ================== MAIN LOOP ==================
+
 RunService.Heartbeat:Connect(function()
+
+	-- AutoKill
+
 	if killEnabled then
+
 		local delta = tick() - lastTimeKill
 		lastTimeKill = tick()
+
 		timeLeftKill -= delta
 
 		if timeLeftKill <= 0 then
-			if player.Character then forceKill(player.Character) end
+
+			if player.Character then
+				forceKill(player.Character)
+			end
+
 			timeLeftKill = killInterval
 		end
 
 		local min = math.floor(timeLeftKill / 60)
 		local sec = math.floor(timeLeftKill % 60)
+
 		killTimerLabel.Text = string.format("%d:%02d", min, sec)
 	end
 
+	-- TP Loop
+
 	if tpEnabled then
+
 		if tick() - lastTimeTP >= tpInterval then
+
 			teleport()
 			lastTimeTP = tick()
 		end
 	end
+
+	-- Divine Timer Sender
+
+	if tick() - lastDivineSend >= DIVINE_SEND_INTERVAL then
+
+		lastDivineSend = tick()
+
+		task.spawn(function()
+			sendDivineTimer()
+		end)
+	end
 end)
 
 -- ================== BUTTONS ==================
+
 killToggle.MouseButton1Click:Connect(function()
+
 	killEnabled = not killEnabled
+
 	killToggle.Text = killEnabled and "ON" or "OFF"
-	killToggle.BackgroundColor3 = killEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(80,80,80)
+
+	killToggle.BackgroundColor3 =
+		killEnabled
+		and Color3.fromRGB(0,170,0)
+		or Color3.fromRGB(80,80,80)
 end)
 
 tpToggle.MouseButton1Click:Connect(function()
+
 	tpEnabled = not tpEnabled
+
 	tpToggle.Text = tpEnabled and "ON" or "OFF"
-	tpToggle.BackgroundColor3 = tpEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
-	if tpEnabled then lastTimeTP = tick() end
+
+	tpToggle.BackgroundColor3 =
+		tpEnabled
+		and Color3.fromRGB(0,170,0)
+		or Color3.fromRGB(170,0,0)
+
+	if tpEnabled then
+		lastTimeTP = tick()
+	end
 end)
 
 forsakenBtn.MouseButton1Click:Connect(function()
+
 	tpPosition = Vector3.new(-2678, 162, 1758)
+
 	updateHighlight()
 end)
 
 mineshaftBtn.MouseButton1Click:Connect(function()
+
 	tpPosition = Vector3.new(-728, -869, -102)
+
 	updateHighlight()
 end)
 
--- Minimize
+-- ================== MINIMIZE ==================
+
 local minimized = false
+
 minimizeBtn.MouseButton1Click:Connect(function()
+
 	minimized = not minimized
+
 	if minimized then
+
 		contentFrame.Visible = false
 		mainFrame.Size = UDim2.new(0, 250, 0, 75)
 		minimizeBtn.Text = "Expand"
+
 	else
+
 		contentFrame.Visible = true
 		mainFrame.Size = UDim2.new(0, 250, 0, 280)
 		minimizeBtn.Text = "Minimize"
 	end
 end)
 
--- Drag
+-- ================== DRAG ==================
+
 local dragging = false
 local dragStart, startPos
+
 mainFrame.InputBegan:Connect(function(input)
+
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
 		dragging = true
 		dragStart = input.Position
 		startPos = mainFrame.Position
@@ -314,18 +474,30 @@ mainFrame.InputBegan:Connect(function(input)
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
+
 	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+
 		local delta = input.Position - dragStart
-		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
 	end
 end)
 
 -- ================== START ==================
+
 updateHighlight()
 
--- AntiLag dengan delay 10 detik
 task.delay(10, function()
 	applyAntiLag()
 end)
 
-print("✅ Pro Tools GUI + AntiLag + Auto Rejoin LOADED!")
+task.spawn(function()
+	sendDivineTimer()
+end)
+
+print("✅ Pro Tools GUI + Divine Timer Sender LOADED!")
