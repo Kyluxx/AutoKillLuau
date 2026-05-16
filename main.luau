@@ -452,7 +452,7 @@ end)
 -- ================== START ==================
 updateHighlight()
 
-task.delay(10, function()
+task.delay(30, function()
 	applyAntiLag()
 end)
 
