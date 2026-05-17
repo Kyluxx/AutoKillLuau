@@ -15,7 +15,7 @@ local killInterval = 3600
 local tpInterval = 1
 
 local tpPosition = Vector3.new(-2678, 162, 1758)
-local killEnabled = true
+local killEnabled = false
 local tpEnabled = false
 
 local timeLeftKill = killInterval
