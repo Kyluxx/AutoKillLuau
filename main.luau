@@ -14,9 +14,14 @@ local JobId = game.JobId
 local killInterval = 3600
 local tpInterval = 1
 
-local tpPosition = Vector3.new(-2678, 162, 1758)
-local killEnabled = false
-local tpEnabled = false
+-- Forsaken 
+-- local tpPosition = Vector3.new(-2678, 162, 1758) 
+
+-- Mineshaft
+local tpPosition = Vector3.new(-728, -869, -102) 
+
+local killEnabled = true
+local tpEnabled = true
 
 local timeLeftKill = killInterval
 local lastTimeKill = tick()
